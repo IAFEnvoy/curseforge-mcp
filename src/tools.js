@@ -1,101 +1,41 @@
 // ============ MCP Tool Definitions & Handlers ============
+import { z } from "zod";
 import { MC_GAME_ID } from "./config.js";
 import { apiRequest, getData } from "./http-client.js";
 
-// ===== Tool Schema Definitions =====
+// ===== Tool Schemas & Registry =====
 export const TOOLS = [
   {
     name: "search_mods",
     description:
       "Search CurseForge mods by keyword, game version, mod loader type, category, sort field, and pagination.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        searchFilter: {
-          type: "string",
-          description: "Search keyword, e.g. 'jei', 'optifine'",
-        },
-        gameId: {
-          type: "integer",
-          description: "Game ID. Minecraft defaults to 432",
-          default: MC_GAME_ID,
-        },
-        classId: {
-          type: "integer",
-          description: "Class ID (optional)",
-        },
-        categoryId: {
-          type: "integer",
-          description: "Category ID (optional)",
-        },
-        gameVersion: {
-          type: "string",
-          description: "Game version filter, e.g. '1.20.1', '1.21.1'",
-        },
-        modLoaderType: {
-          type: "integer",
-          description:
-            "Mod loader type. 0=Any, 1=Forge, 2=Cauldron, 3=LiteLoader, 4=Fabric, 5=Quilt, 6=NeoForge",
-          enum: [0, 1, 2, 3, 4, 5, 6],
-        },
-        sortField: {
-          type: "integer",
-          description:
-            "Sort field. 1=Popularity, 2=Last Updated, 3=Name, 4=Author, 5=Total Downloads",
-          enum: [1, 2, 3, 4, 5],
-        },
-        sortOrder: {
-          type: "string",
-          description: "Sort order",
-          enum: ["asc", "desc"],
-          default: "desc",
-        },
-        pageSize: {
-          type: "integer",
-          description: "Results per page (default 50)",
-          minimum: 1,
-          maximum: 100,
-        },
-        index: {
-          type: "integer",
-          description: "Pagination offset (0-based)",
-          minimum: 0,
-        },
-      },
-      required: [],
+    schema: {
+      searchFilter: z.string().optional().describe("Search keyword, e.g. 'jei', 'optifine'"),
+      gameId: z.coerce.number().int().optional().default(MC_GAME_ID).describe("Game ID. Minecraft defaults to 432"),
+      classId: z.coerce.number().int().optional().describe("Class ID (optional)"),
+      categoryId: z.coerce.number().int().optional().describe("Category ID (optional)"),
+      gameVersion: z.string().optional().describe("Game version filter, e.g. '1.20.1', '1.21.1'"),
+      modLoaderType: z.coerce.number().int().min(0).max(6).optional().describe("Mod loader type. 0=Any, 1=Forge, 2=Cauldron, 3=LiteLoader, 4=Fabric, 5=Quilt, 6=NeoForge"),
+      sortField: z.coerce.number().int().min(1).max(5).optional().describe("Sort field. 1=Popularity, 2=Last Updated, 3=Name, 4=Author, 5=Total Downloads"),
+      sortOrder: z.enum(["asc", "desc"]).optional().default("desc").describe("Sort order"),
+      pageSize: z.coerce.number().int().min(1).max(100).optional().describe("Results per page (default 50)"),
+      index: z.coerce.number().int().min(0).optional().describe("Pagination offset (0-based)"),
     },
   },
 
   {
     name: "get_mod",
     description: "Get detailed info for a single mod: description, authors, download count, categories, etc.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        modId: {
-          type: "integer",
-          description: "Mod ID (usually >= 30000)",
-        },
-      },
-      required: ["modId"],
+    schema: {
+      modId: z.coerce.number().int().describe("Mod ID (usually >= 30000)"),
     },
   },
 
   {
     name: "get_mods",
     description: "Batch-fetch multiple mods at once. Up to 50 mod IDs per request.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        modIds: {
-          type: "array",
-          description: "List of mod IDs",
-          items: { type: "integer" },
-          minItems: 1,
-          maxItems: 50,
-        },
-      },
-      required: ["modIds"],
+    schema: {
+      modIds: z.array(z.coerce.number().int()).min(1).max(50).describe("List of mod IDs"),
     },
   },
 
@@ -103,36 +43,12 @@ export const TOOLS = [
     name: "get_mod_files",
     description:
       "Get a mod's file list. Filter by game version and mod loader type, with pagination.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        modId: {
-          type: "integer",
-          description: "Mod ID",
-        },
-        gameVersion: {
-          type: "string",
-          description: "Game version filter, e.g. '1.20.1'",
-        },
-        modLoaderType: {
-          type: "integer",
-          description:
-            "Mod loader type filter. 0=Any, 1=Forge, 2=Cauldron, 3=LiteLoader, 4=Fabric, 5=Quilt, 6=NeoForge",
-          enum: [0, 1, 2, 3, 4, 5, 6],
-        },
-        pageSize: {
-          type: "integer",
-          description: "Results per page",
-          minimum: 1,
-          maximum: 100,
-        },
-        index: {
-          type: "integer",
-          description: "Pagination offset (0-based)",
-          minimum: 0,
-        },
-      },
-      required: ["modId"],
+    schema: {
+      modId: z.coerce.number().int().describe("Mod ID"),
+      gameVersion: z.string().optional().describe("Game version filter, e.g. '1.20.1'"),
+      modLoaderType: z.coerce.number().int().min(0).max(6).optional().describe("Mod loader type filter. 0=Any, 1=Forge, 2=Cauldron, 3=LiteLoader, 4=Fabric, 5=Quilt, 6=NeoForge"),
+      pageSize: z.coerce.number().int().min(1).max(100).optional().describe("Results per page"),
+      index: z.coerce.number().int().min(0).optional().describe("Pagination offset (0-based)"),
     },
   },
 
@@ -140,95 +56,48 @@ export const TOOLS = [
     name: "get_mod_file",
     description:
       "Get details of a single file: name, download URL, size, dependencies, release date.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        modId: {
-          type: "integer",
-          description: "Mod ID",
-        },
-        fileId: {
-          type: "integer",
-          description: "File ID",
-        },
-      },
-      required: ["modId", "fileId"],
+    schema: {
+      modId: z.coerce.number().int().describe("Mod ID"),
+      fileId: z.coerce.number().int().describe("File ID"),
     },
   },
 
   {
     name: "get_mod_file_download_url",
     description: "Get the CDN download URL for a mod file. The returned link does not require an API key to download.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        modId: {
-          type: "integer",
-          description: "Mod ID",
-        },
-        fileId: {
-          type: "integer",
-          description: "File ID",
-        },
-      },
-      required: ["modId", "fileId"],
+    schema: {
+      modId: z.coerce.number().int().describe("Mod ID"),
+      fileId: z.coerce.number().int().describe("File ID"),
     },
   },
 
   {
     name: "get_categories",
     description: "Get all category lists for a game (e.g. Minecraft mods, resource packs, maps).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        gameId: {
-          type: "integer",
-          description: "Game ID. Minecraft defaults to 432",
-          default: MC_GAME_ID,
-        },
-      },
-      required: [],
+    schema: {
+      gameId: z.coerce.number().int().optional().default(MC_GAME_ID).describe("Game ID. Minecraft defaults to 432"),
     },
   },
 
   {
     name: "get_minecraft_versions",
     description: "Get all Minecraft versions available on CurseForge.",
-    inputSchema: {
-      type: "object",
-      properties: {},
-      required: [],
-    },
+    schema: {},
   },
 
   {
     name: "get_featured_mods",
     description: "Get the featured / popular mods list on CurseForge.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        gameId: {
-          type: "integer",
-          description: "Game ID. Minecraft defaults to 432",
-          default: MC_GAME_ID,
-        },
-      },
-      required: [],
+    schema: {
+      gameId: z.coerce.number().int().optional().default(MC_GAME_ID).describe("Game ID. Minecraft defaults to 432"),
     },
   },
 
   {
     name: "get_mod_description",
     description: "Get the full HTML description text of a mod.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        modId: {
-          type: "integer",
-          description: "Mod ID",
-        },
-      },
-      required: ["modId"],
+    schema: {
+      modId: z.coerce.number().int().describe("Mod ID"),
     },
   },
 ];
@@ -320,3 +189,4 @@ export const TOOL_HANDLERS = {
     );
   },
 };
+

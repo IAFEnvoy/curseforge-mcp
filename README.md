@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/curseforge-mcp)](https://www.npmjs.com/package/curseforge-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**MCP (Model Context Protocol) server for CurseForge** — search mods, browse files, get download URLs, and more. Built with **zero external dependencies**, using only Node.js built-in modules.
+**MCP (Model Context Protocol) server for CurseForge** — search mods, browse files, get download URLs, and more. Powered by the official `@modelcontextprotocol/sdk`.
 
 Let your AI assistant interact with the CurseForge API directly: find Minecraft mods, check versions, inspect files, and retrieve download links — all through natural language.
 
@@ -105,7 +105,24 @@ The server communicates via **JSON-RPC 2.0 over stdio** — it's designed to be 
 
 ## VS Code Integration
 
-Add this to your `.vscode/mcp.json`:
+Add this to your `.vscode/mcp.json` (installed globally via npm):
+
+```json
+{
+  "servers": {
+    "curseforge": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["curseforge-mcp"],
+      "env": {
+        "CURSEFORGE_API_KEY": "${env:CURSEFORGE_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+Or for local development:
 
 ```json
 {
@@ -116,23 +133,6 @@ Add this to your `.vscode/mcp.json`:
       "args": ["${workspaceFolder}/index.js"],
       "env": {
         "CURSEFORGE_API_KEY": "${env:CURSEFORGE_API_KEY}"
-      }
-    }
-  }
-}
-```
-
-Or globally in your VS Code user settings (`mcp.json`):
-
-```json
-{
-  "servers": {
-    "curseforge": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["/absolute/path/to/curseforge-mcp/index.js"],
-      "env": {
-        "CURSEFORGE_API_KEY": "your-api-key"
       }
     }
   }
@@ -167,12 +167,14 @@ Add to `claude_desktop_config.json`:
 curseforge-mcp/
 ├── index.js              # Entry point
 ├── package.json
-└── src/
-    ├── config.js         # API base URL, API key, Minecraft game ID
-    ├── http-client.js    # HTTPS request wrapper, response unwrapper
-    ├── tools.js          # Tool schemas & handler implementations
-    └── mcp-server.js     # JSON-RPC 2.0 protocol, stdio transport
+├── src/
+│   ├── config.js         # API base URL, API key, Minecraft game ID
+│   ├── http-client.js    # HTTPS request wrapper (pure Node.js, no deps)
+│   ├── tools.js          # Tool schemas & handler implementations
+│   └── mcp-server.js     # MCP server via @modelcontextprotocol/sdk
 ```
+
+**Dependencies:** `@modelcontextprotocol/sdk` — the only external dependency. The HTTP client (`src/http-client.js`) uses only Node.js built-in modules.
 
 ---
 

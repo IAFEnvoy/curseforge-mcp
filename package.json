@@ -1,7 +1,23 @@
 {
   "name": "curseforge-mcp",
   "version": "1.0.0",
-  "description": "MCP server for CurseForge — search mods, browse files, get download URLs, zero dependencies",
+  "description": "MCP server for CurseForge — search mods, browse files, get download URLs",
+  "keywords": [
+    "curseforge",
+    "mcp",
+    "model-context-protocol",
+    "minecraft",
+    "mods",
+    "modding"
+  ],
+  "homepage": "https://github.com/IAFEnvoy/curseforge-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/IAFEnvoy/curseforge-mcp/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IAFEnvoy/curseforge-mcp.git"
+  },
   "license": "MIT",
   "author": "IAFEnvoy",
   "type": "module",
@@ -16,19 +32,11 @@
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": [
-    "curseforge",
-    "mcp",
-    "model-context-protocol",
-    "minecraft",
-    "mods",
-    "modding"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/IAFEnvoy/curseforge-mcp"
-  },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
   }
 }
