@@ -31,9 +31,9 @@ npm install -g curseforge-mcp
 
 ## Prerequisites
 
-You need a **CurseForge API Key**. Apply here:
+You need a **CurseForge API Key**. Get it from the CurseForge for Studios console:
 
-> https://forms.monday.com/forms/dce5ccb7afda9a1c21dab1a1aa1d84eb?r=use1
+> https://console.curseforge.com/#/api-keys
 
 Once approved, set it as an environment variable:
 
