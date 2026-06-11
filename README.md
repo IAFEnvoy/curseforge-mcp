@@ -15,7 +15,7 @@ Let your AI assistant interact with the CurseForge API directly: find Minecraft 
 - 📦 **Get mod details** — summary, authors, download count, categories, logo
 - 📂 **Browse mod files** — list all files of a mod, filtered by game version & loader
 - 📄 **Inspect file details** — file name, size, release date, dependencies, download URL
-- ⬇️ **Get download URLs** — CDN links that work without an API key
+- ⬇️ **Download mod files** — download directly to a local directory (API key required by ForgeCDN)
 - 🏷️ **Browse categories** — discover all category/subcategory IDs
 - 🎮 **List Minecraft versions** — all versions available on CurseForge
 - ⭐ **Featured mods** — curated/popular mod list
@@ -71,7 +71,8 @@ The server communicates via **JSON-RPC 2.0 over stdio** — it's designed to be 
 | `get_mods` | Batch fetch up to 50 mods at once |
 | `get_mod_files` | List all files of a mod, with optional version/loader filters & pagination |
 | `get_mod_file` | Get details of a single file (name, size, download URL, dependencies) |
-| `get_mod_file_download_url` | Get the direct CDN download URL (no API key needed to download) |
+| `get_mod_file_download_url` | Get the CDN download URL for a mod file |
+| `download_mod_file` | Download a mod file from a URL to a local directory (with API key auth) |
 | `get_categories` | List all categories for a game (e.g. Minecraft mods, resource packs, maps) |
 | `get_minecraft_versions` | List all Minecraft versions available on CurseForge |
 | `get_featured_mods` | Get the featured/curated mods list |

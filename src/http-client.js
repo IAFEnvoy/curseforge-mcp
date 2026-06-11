@@ -1,5 +1,7 @@
 // ============ HTTP Request Client ============
 import https from "node:https";
+import { createWriteStream } from "node:fs";
+import { basename, join } from "node:path";
 import { API_BASE, API_KEY } from "./config.js";
 
 /**
@@ -64,4 +66,82 @@ export function apiRequest(method, path, body = null) {
 export async function getData(response) {
   const json = await response;
   return json.data ?? json;
+}
+
+/**
+ * Download a file from a URL to a local directory.
+ * Supports redirects and uses API key authentication (required by ForgeCDN).
+ * @param {string} url - The download URL
+ * @param {string} dir - Local directory to save the file
+ * @returns {Promise<object>} { filePath, fileName, fileSize }
+ */
+export function downloadFile(url, dir) {
+  return new Promise((resolve, reject) => {
+    const requestUrl = new URL(url);
+    const isForgeCdn = requestUrl.hostname.endsWith("forgecdn.net");
+
+    const options = {
+      hostname: requestUrl.hostname,
+      path: requestUrl.pathname + requestUrl.search,
+      method: "GET",
+      headers: {
+        Accept: "*/*",
+      },
+    };
+
+    // ForgeCDN now requires API key
+    if (isForgeCdn) {
+      options.headers["x-api-key"] = API_KEY;
+    }
+
+    const req = https.request(options, (res) => {
+      // Handle redirects
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        downloadFile(res.headers.location, dir).then(resolve).catch(reject);
+        return;
+      }
+
+      if (res.statusCode >= 400) {
+        let body = "";
+        res.on("data", (c) => (body += c));
+        res.on("end", () => reject(new Error(`Download failed (${res.statusCode}): ${body.substring(0, 200)}`)));
+        return;
+      }
+
+      // Determine filename from Content-Disposition or URL
+      let filename = basename(requestUrl.pathname);
+      const disposition = res.headers["content-disposition"];
+      if (disposition) {
+        const match = disposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)/);
+        if (match) filename = decodeURIComponent(match[1]);
+      }
+
+      const filePath = join(dir, filename);
+      const totalSize = parseInt(res.headers["content-length"], 10) || 0;
+      let downloaded = 0;
+
+      const fileStream = createWriteStream(filePath);
+      res.on("data", (chunk) => {
+        downloaded += chunk.length;
+        fileStream.write(chunk);
+      });
+
+      res.on("end", () => {
+        fileStream.end();
+        resolve({ filePath, fileName: filename, fileSize: downloaded });
+      });
+
+      res.on("error", (e) => {
+        fileStream.close();
+        reject(new Error(`Download stream error: ${e.message}`));
+      });
+
+      fileStream.on("error", (e) => {
+        reject(new Error(`File write error: ${e.message}`));
+      });
+    });
+
+    req.on("error", (e) => reject(new Error(`Download request failed: ${e.message}`)));
+    req.end();
+  });
 }

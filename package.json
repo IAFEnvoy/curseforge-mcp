@@ -1,6 +1,6 @@
 {
   "name": "curseforge-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP server for CurseForge — search mods, browse files, get download URLs",
   "keywords": [
     "curseforge",

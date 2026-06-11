@@ -1,7 +1,7 @@
 // ============ MCP Tool Definitions & Handlers ============
 import { z } from "zod";
 import { MC_GAME_ID } from "./config.js";
-import { apiRequest, getData } from "./http-client.js";
+import { apiRequest, getData, downloadFile } from "./http-client.js";
 
 // ===== Tool Schemas & Registry =====
 export const TOOLS = [
@@ -64,7 +64,7 @@ export const TOOLS = [
 
   {
     name: "get_mod_file_download_url",
-    description: "Get the CDN download URL for a mod file. The returned link does not require an API key to download.",
+    description: "Get the CDN download URL for a mod file. The returned link requires an API key to download via ForgeCDN.",
     schema: {
       modId: z.coerce.number().int().describe("Mod ID"),
       fileId: z.coerce.number().int().describe("File ID"),
@@ -98,6 +98,14 @@ export const TOOLS = [
     description: "Get the full HTML description text of a mod.",
     schema: {
       modId: z.coerce.number().int().describe("Mod ID"),
+    },
+  },
+  {
+    name: "download_mod_file",
+    description: "Download a mod file from a given URL to a local directory. Requires API key authentication for ForgeCDN links.",
+    schema: {
+      downloadUrl: z.string().url().describe("The download URL of the mod file (from get_mod_file_download_url or get_mod_file)"),
+      downloadDir: z.string().describe("Local directory path to save the downloaded file"),
     },
   },
 ];
@@ -187,6 +195,17 @@ export const TOOL_HANDLERS = {
     return getData(
       apiRequest("GET", `/v1/mods/${args.modId}/description`)
     );
+  },
+
+  async download_mod_file(args) {
+    const result = await downloadFile(args.downloadUrl, args.downloadDir);
+    return {
+      success: true,
+      filePath: result.filePath,
+      fileName: result.fileName,
+      fileSize: result.fileSize,
+      message: `Downloaded "${result.fileName}" (${(result.fileSize / 1024 / 1024).toFixed(2)} MB) to ${result.filePath}`,
+    };
   },
 };
 
